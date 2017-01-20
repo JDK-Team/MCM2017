@@ -1,30 +1,75 @@
 from Person import Person
 import time
+import sys
+import threading
 
-class Node:
-    def __init__(self, time, function, adjacencyList, isEnd):
+class Node(threading.Thread):
+    def __init__(self, time, function, adjacencyList, queueMax, name):
+        threading.Thread.__init__(self, name=name)
         self.queue = []
+        self.name = name
         self.timeAtNode = time
         self.choiceFunction = function #returns integer that is index of node in adjacency list
         self.adjacencyList = adjacencyList
         self.isSimulating = False
-        self.isEnd = isEnd
+        self.queueMax = queueMax
 
-    def addToQueue(self, person): #add person to end of array, front of queue is front of array
-        if(self.isEnd):
-            print(person.timeSpent)
-            return
+    def addToQueue(self, person):#add person to end of array, front of queue is front of array
+        if (len(self.queue)>= self.queueMax ):
+            return False
         self.queue.append(person)
-        person.startWaiting();
-        if(not(self.isSimulating)):
-            self.startSimulation()
+        #print("start", self.name, person.id)
+        return True
+        #if(not(self.isSimulating))
 
     def startSimulation(self):
-        self.isSimulating = True
+        # self.isSimulating = True
         while(len(self.queue)>0):
             person = self.queue.pop(0)
             time.sleep(self.timeAtNode)
-            person.endWaiting()
+            #person.endWaiting()
             nodeIndex = self.choiceFunction()
-            self.adjacencyList[nodeIndex].addToQueue(person)
-        self.isSimulating = False
+            while (True):
+                if (self.adjacencyList[nodeIndex].addToQueue(person)):
+                    #person.endWaiting()
+                    #print("end", self.name, person.id)
+                    break
+
+        # self.isSimulating = False
+
+    def run(self):
+        while True:
+            self.startSimulation()
+
+    def stop(self):
+        for node in self.adjacencyList:
+            node.stop()
+        sys.exit()
+
+
+
+class EndNode(Node):
+    def __init__(self):
+        Node.__init__(self, 0, None, None, 1000, "end")
+        self.count = 0
+        self.numPeople = 0
+        self.graph = None
+
+    def addToQueue(self, person):
+        person.endWaiting()
+        print(person.timeSpent)
+        self.count += 1
+        if(self.count == self.numPeople):
+            self.graph.finish()
+        return True
+
+    def stop(self):
+        sys.exit()
+
+# class StartNode(Node):
+#     def __init__(self, time, function, adjacencyList):
+#         Node.__init__(self, time, function, adjacencyList)
+#     def addToQueue(self, person):
+#         for node in self.adjacencyList:
+#             if(len(node.queue)==0):
+#                 node.addToQueue(person)
