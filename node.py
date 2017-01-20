@@ -46,6 +46,9 @@ class Node(threading.Thread):
             node.stop()
         sys.exit()
 
+    def __str__(self):
+        return self.name
+
 
 
 class EndNode(Node):
