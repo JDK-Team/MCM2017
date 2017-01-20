@@ -17,7 +17,7 @@ class Graph:
     def simulate(self,numPeople):
         #start all the threads
         for node in self.nodeList:
-            print(node)
+            print(node, "adjacency list: ", node.adjacencyList)
             node.start()
         self.endNode.numPeople = numPeople
         for i in range(numPeople):
@@ -50,25 +50,25 @@ def makeGraph(numIDcheckNodes, numScanners, numAITS, dropOffForAITS, idCheckToDr
     endNode = EndNode()
     pickUpNodeList = []
     for i in range(numScanners):
-        pickUpNodeList.append(Node(2, probFunction, [endNode], 100, "pickUp"))
+        pickUpNodeList.append(Node(2, probFunction, [endNode], 100, "pickUp" + str(i)))
     aitNodeList = []
     for i in range(numAITS):
         adjacencyList = []
         for i in getIndicesOfNum(i, dropOffForAITS):
             adjacencyList.append(pickUpNodeList[i])
-        aitNodeList.append(Node(1.3, probFunction, adjacencyList, 100, "ait"))
+        aitNodeList.append(Node(1.3, probFunction, adjacencyList, 100, "ait" + str(i)))
     dropOffNodeList = []
     for i in range(numScanners):
         adjacencyList = []
         for ait in dropOffForAITS[i]:
             adjacencyList.append(aitNodeList[ait])
-        dropOffNodeList.append(Node(2, probFunction, adjacencyList, 20, "dropOff"))
+        dropOffNodeList.append(Node(2, probFunction, adjacencyList, 20, "dropOff" + str(i)))
     idCheckNodeList = []
     for i in range(numIDcheckNodes):
         adjacencyList = []
         for idCheck in idCheckToDropoff[i]:
             adjacencyList.append(dropOffNodeList[idCheck])
-        idCheckNodeList.append(Node(1.3, probFunction, adjacencyList, 1, "idCheck"))
+        idCheckNodeList.append(Node(1.3, probFunction, adjacencyList, 1, "idCheck" + str(i)))
     startNode = Node(0, probFunction, idCheckNodeList, 100, "start")
 
     nodeList = [endNode]
