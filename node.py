@@ -13,6 +13,7 @@ class Node(threading.Thread):
         self.adjacencyList = adjacencyList
         self.isSimulating = False
         self.queueMax = queueMax
+        self.shouldFinish = threading.Event()
 
     def addToQueue(self, person):#add person to end of array, front of queue is front of array
         if (len(self.queue)>= self.queueMax ):
@@ -38,14 +39,12 @@ class Node(threading.Thread):
         # self.isSimulating = False
 
     def run(self):
-        while True:
+        while not self.shouldFinish.is_set():
             self.startSimulation()
-
+    
     def stop(self):
-        for node in self.adjacencyList:
-            node.stop()
-        sys.exit()
-
+        self.shouldFisish.set()
+    
     def __str__(self):
         return self.name
 
@@ -66,8 +65,6 @@ class EndNode(Node):
             self.graph.finish()
         return True
 
-    def stop(self):
-        sys.exit()
 
 # class StartNode(Node):
 #     def __init__(self, time, function, adjacencyList):
