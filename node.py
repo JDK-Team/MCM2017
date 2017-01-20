@@ -43,7 +43,7 @@ class Node(threading.Thread):
             self.startSimulation()
     
     def stop(self):
-        self.shouldFisish.set()
+        self.shouldFinish.set()
     
     def __str__(self):
         return self.name
