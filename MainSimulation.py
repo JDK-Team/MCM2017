@@ -61,15 +61,15 @@ def getIndicesOfNum(num, twoDList):
                 break
     return indices
 
-SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections")
+SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections zoneDConnections")
 
 #def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
-def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes):
+def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numberOfZoneD):
     # these must all be SecurityLevel named tuples
     def defaultChoiceFn(choicesList,default=0,prevPath=[]):
         return default
     def strictMinimumFn(choicesList,default=0,prevPath=[]):
-        print("MINFUNC: ",choicesList,default)
+        #print("MINFUNC: ",choicesList,default)
         if len(choicesList) <= 1:
             return 0
         if choicesList[default] == min(choicesList):
@@ -79,6 +79,14 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes):
         except ValueError:
             print("Something is truly wrong here: the minimum element is not in the array...")
             return 0
+    def zoneDChoiceFn(choicesList,default=0,prevPath=[]): #zoneD choices are always listed after regular screening choices (never choice 0)
+        randNum = random.random()
+        if(randNum<.01): #1% of people go to zone D and 1% of bags go to zone D
+            if(len(choicesList) == 2):
+                return 1
+            return choicesList.index(min(choicesList)) #return index of zoneD with fewest people waiting
+        else:
+            return default
     # endNode = EndNode()
     # pickUpNode = Node(2, defaultChoiceFn, [endNode], 100, "pickUp")
     # aitNode = Node(1.3, defaultChoiceFn, [pickUpNode], 100, "ait")
@@ -90,23 +98,33 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes):
     global scalar
 
     endNode = EndNode()
+
+    zoneDNodeList = []
+    for i in range(numberOfZoneD):
+        zoneDNodeList.append(Node(300/scalar, defaultChoiceFn, [endNode], 0, 10, "zoneD" + str(i))) #10 people can be in zone D
+
     pickUpNodeList = []
     for i in range(dropOffLevel.numElements):
+        adjacencyList = [endNode]
+        for j in dropOffLevel.zoneDConnections[i]:
+            adjacencyList.append(zoneDNodeList[j])
         if(i in preCheckNodes):
-            pickUpNodeList.append(Node(5/scalar, defaultChoiceFn, [endNode], 0, 100, "PreCheckpickUp" + str(i)))
+            pickUpNodeList.append(Node(5/scalar, zoneDChoiceFn, adjacencyList, 0, 100, "PreCheckPickUp" + str(i)))
         else:
-            pickUpNodeList.append(Node(8.5/scalar, defaultChoiceFn, [endNode], 0, 100, "pickUp" + str(i)))
+            pickUpNodeList.append(Node(8.5/scalar, zoneDChoiceFn, adjacencyList, 0, 100, "pickUp" + str(i)))
 
     aitNodeList = []
     for i in range(aitLevel.numElements):
         adjacencyList = []
         for j in getIndicesOfNum(i, dropOffLevel.allConnections):
             adjacencyList.append(pickUpNodeList[j])
+        for j in aitLevel.zoneDConnections[i]:
+            adjacencyList.append(zoneDNodeList[j])
         try:
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(11.5/scalar, defaultChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
+        aitNodeList.append(Node(11.5/scalar, zoneDChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):
@@ -136,7 +154,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes):
 
 
     nodeList = [endNode]
-    nodeList = nodeList + pickUpNodeList + aitNodeList + dropOffNodeList + idCheckNodeList
+    nodeList = nodeList + zoneDNodeList + pickUpNodeList + aitNodeList + dropOffNodeList + idCheckNodeList
     nodeList.extend(startNodeList)
     # for node in nodeList:
     #     node.start()
@@ -151,13 +169,14 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes):
 random.seed(a=1)
 
 #be careful, the second argument is indexes of the elements of the third argument 
-startLevel = SecurityLevel(2,[1,0],[[0,1], [2]])
-idCheckTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]])
-dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]])
-aitTuple = SecurityLevel(3,None,None)
-preCheckNodes = [2] #indices of drop off (and therefor pickup) nodes that are TSA-precheck
+startLevel = SecurityLevel(2,[1,0],[[0,1], [2]], None)
+idCheckTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], None)
+dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], [[0], [0], [1]]) #last argument is the zone D's that the given scanner feeds in to (should have the
+                                                                                    #same number of sublists as there are scanners)
+aitTuple = SecurityLevel(3,None,None, [[0],[0],[1]])
+preCheckNodes = [2] #indices of drop off (and therefore pickup) nodes that are TSA-precheck
 
-makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, preCheckNodes)
+makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, preCheckNodes, 2)
 #makeGraph(2,3,3, #numIDCheckNodes, numScanners, numAITS
 #          [[0,1], [1,2]], #idCheckToDropOff
 #          [[0,1], [0,1,2], [2]]) #dropOffForAITS
