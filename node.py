@@ -40,6 +40,8 @@ class Node(threading.Thread):
                     person.startWaiting()
                     #print("end", self.name, person.id)
                     break
+                else:
+                    print("person ", person.id, " is waiting at ", self.name, "the next queue has length: ", queueLengths[nodeIndex])
 
         # self.isSimulating = False
 
