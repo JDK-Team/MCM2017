@@ -19,6 +19,7 @@ class Node(threading.Thread):
         if (len(self.queue)>= self.queueMax ):
             return False
         self.queue.append(person)
+        person.endWaiting()
         #print("start", self.name, person.id)
         return True
         #if(not(self.isSimulating))
@@ -32,7 +33,7 @@ class Node(threading.Thread):
             nodeIndex = self.choiceFunction()
             while (True):
                 if (self.adjacencyList[nodeIndex].addToQueue(person)):
-                    #person.endWaiting()
+                    person.startWaiting()
                     #print("end", self.name, person.id)
                     break
 
@@ -43,8 +44,10 @@ class Node(threading.Thread):
             self.startSimulation()
     
     def stop(self):
+        for node in self.adjacencyList:
+            node.stop()
         self.shouldFinish.set()
-    
+
     def __str__(self):
         return self.name
 
@@ -59,11 +62,14 @@ class EndNode(Node):
 
     def addToQueue(self, person):
         person.endWaiting()
-        print(person.timeSpent)
+        print(person.timeSpent, person.timesAtNodes)
         self.count += 1
         if(self.count == self.numPeople):
             self.graph.finish()
         return True
+
+    def stop(self):
+        self.shouldFinish.set()
 
 
 # class StartNode(Node):

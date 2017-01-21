@@ -1,6 +1,7 @@
 from node import Node, EndNode
 from Person import Person
 import sys
+import time
 
 class Graph:
     def __init__(self,startNode,endNode, nodeList):
@@ -22,6 +23,7 @@ class Graph:
         self.endNode.numPeople = numPeople
         for i in range(numPeople):
             self.addPerson()
+            time.sleep(13)
 
     def finish(self):
         self.startNode.stop()
@@ -36,7 +38,7 @@ def getIndicesOfNum(num, twoDList):
                 break
     return indices
 
-def makeGraph(numIDcheckNodes, numScanners, numAITS, dropOffForAITS, idCheckToDropoff): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
+def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
     def probFunction():
         return 0
     # endNode = EndNode()
@@ -50,25 +52,25 @@ def makeGraph(numIDcheckNodes, numScanners, numAITS, dropOffForAITS, idCheckToDr
     endNode = EndNode()
     pickUpNodeList = []
     for i in range(numScanners):
-        pickUpNodeList.append(Node(2, probFunction, [endNode], 100, "pickUp" + str(i)))
+        pickUpNodeList.append(Node(8.5, probFunction, [endNode], 100, "pickUp" + str(i)))
     aitNodeList = []
     for i in range(numAITS):
         adjacencyList = []
-        for i in getIndicesOfNum(i, dropOffForAITS):
-            adjacencyList.append(pickUpNodeList[i])
-        aitNodeList.append(Node(1.3, probFunction, adjacencyList, 100, "ait" + str(i)))
+        for j in getIndicesOfNum(i, dropOffForAITS):
+            adjacencyList.append(pickUpNodeList[j])
+        aitNodeList.append(Node(11.5, probFunction, adjacencyList, 100, "ait" + str(i)))
     dropOffNodeList = []
     for i in range(numScanners):
         adjacencyList = []
         for ait in dropOffForAITS[i]:
             adjacencyList.append(aitNodeList[ait])
-        dropOffNodeList.append(Node(2, probFunction, adjacencyList, 20, "dropOff" + str(i)))
+        dropOffNodeList.append(Node(8.5, probFunction, adjacencyList, 20, "dropOff" + str(i)))
     idCheckNodeList = []
     for i in range(numIDcheckNodes):
         adjacencyList = []
         for idCheck in idCheckToDropoff[i]:
             adjacencyList.append(dropOffNodeList[idCheck])
-        idCheckNodeList.append(Node(1.3, probFunction, adjacencyList, 1, "idCheck" + str(i)))
+        idCheckNodeList.append(Node(11, probFunction, adjacencyList, 1, "idCheck" + str(i)))
     startNode = Node(0, probFunction, idCheckNodeList, 100, "start")
 
     nodeList = [endNode]
@@ -78,13 +80,15 @@ def makeGraph(numIDcheckNodes, numScanners, numAITS, dropOffForAITS, idCheckToDr
     #     node.start()
 
     g = Graph(startNode, endNode, nodeList)
-    g.simulate(1)
+    g.simulate(10)
 
     # p = Person()
     # p.startWaiting()
     # startNode.addToQueue(p)
 
-makeGraph(1,1,1, [[0]], [[0]])
+makeGraph(2,3,3, #numIDCheckNodes, numScanners, numAITS
+          [[0,1], [1,2]], #idCheckToDropOff
+          [[0,1], [0,1,2], [2]]) #dropOffForAITS
 
 
 
