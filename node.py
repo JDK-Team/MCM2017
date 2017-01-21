@@ -4,11 +4,11 @@ import sys
 import threading
 
 class Node(threading.Thread):
-    def __init__(self, time, function, adjacencyList, defaultChoiceIndex, queueMax, name):
+    def __init__(self, timeFunction, function, adjacencyList, defaultChoiceIndex, queueMax, name):
         threading.Thread.__init__(self, name=name)
         self.queue = []
         self.name = name
-        self.timeAtNode = time
+        self.timeFunction = timeFunction
         self.choiceFunction = function #returns integer that is index of node in adjacency list
         self.adjacencyList = adjacencyList
         self.defaultChoiceIndex = defaultChoiceIndex
@@ -30,7 +30,7 @@ class Node(threading.Thread):
         # self.isSimulating = True
         while(len(self.queue)>0):
             person = self.queue.pop(0)
-            time.sleep(self.timeAtNode)
+            time.sleep(self.timeFunction(person.path))
             #person.endWaiting()
             queueLengths = list(map(lambda n: len(n.queue), self.adjacencyList))
 

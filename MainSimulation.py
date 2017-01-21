@@ -71,8 +71,8 @@ def isInt(string):
 SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections zoneDConnections")
 
 #def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
-def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numberOfZoneD):
-    # these must all be SecurityLevel named tuples
+def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numberOfZoneD): # the first four must be SecurityLevel named tuples
+    #################CHOICE FUNCTIONS#####################################################################
     def defaultChoiceFn(choicesList,default=0,prevPath=[]):
         return default
     def strictMinimumFn(choicesList,default=0,prevPath=[]):
@@ -110,6 +110,30 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
             index = dropOffNode[startIndex:]
             return index
 
+    ###########TIME FUNCTIONS#####################################################################
+    def zoneDTimeFunction(path):
+        prevNode = path[-1]
+        if(prevNode[0] == "P" or prevNode[0] == "p"): #came from pickUp, gotta recheck bags
+            return 300/scalar
+        else: #came from AIT, just doing a patdown
+            return 20/scalar
+    def pickUpNodeTimeFunction(path):
+        if(path[0][-1] == "0"): #regular line
+            return 8.5/scalar
+        else: #tsa precheck line
+            return 5/scalar
+    def aitTimeFunction(path):
+        return 11.5/scalar
+    def dropOffTimeFunction(path):
+        if(path[0][-1] == "0"): #regular line
+            return 8.5/scalar
+        else:
+            return 5/scalar
+    def idCheckTimeFunction(path):
+        return 11.5/scalar
+    def startTimeFunction(path):
+        return 0
+
     # endNode = EndNode()
     # pickUpNode = Node(2, defaultChoiceFn, [endNode], 100, "pickUp")
     # aitNode = Node(1.3, defaultChoiceFn, [pickUpNode], 100, "ait")
@@ -124,17 +148,14 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
 
     zoneDNodeList = []
     for i in range(numberOfZoneD):
-        zoneDNodeList.append(Node(300/scalar, defaultChoiceFn, [endNode], 0, 10, "zoneD" + str(i))) #10 people can be in zone D
+        zoneDNodeList.append(Node(zoneDTimeFunction, defaultChoiceFn, [endNode], 0, 10, "zoneD" + str(i))) #10 people can be in zone D
 
     pickUpNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = [endNode]
         for j in dropOffLevel.zoneDConnections[i]:
             adjacencyList.append(zoneDNodeList[j])
-        if(i in preCheckNodes):
-            pickUpNodeList.append(Node(5/scalar, zoneDChoiceFn, adjacencyList, 0, 100, "PreCheckPickUp" + str(i)))
-        else:
-            pickUpNodeList.append(Node(8.5/scalar, zoneDChoiceFn, adjacencyList, 0, 100, "pickUp" + str(i)))
+        pickUpNodeList.append(Node(pickUpNodeTimeFunction, zoneDChoiceFn, adjacencyList, 0, 100, "PreCheckPickUp" + str(i)))
 
     aitNodeList = []
     for i in range(aitLevel.numElements):
@@ -147,31 +168,28 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(11.5/scalar, aitChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
+        aitNodeList.append(Node(aitTimeFunction, aitChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = []
         for ait in dropOffLevel.allConnections[i]:
             adjacencyList.append(aitNodeList[ait])
-        if(i in preCheckNodes):
-            dropOffNodeList.append(Node(5/scalar, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "PreCheckdropOff" + str(i)))
-        else:
-            dropOffNodeList.append(Node(8.5/scalar, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "dropOff" + str(i)))
+        dropOffNodeList.append(Node(dropOffTimeFunction, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "PreCheckdropOff" + str(i)))
     
     idCheckNodeList = []
     for i in range(idCheckLevel.numElements):
         adjacencyList = []
         for dropOff in idCheckLevel.allConnections[i]:
             adjacencyList.append(dropOffNodeList[dropOff])
-        idCheckNodeList.append(Node(11/scalar, defaultChoiceFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
+        idCheckNodeList.append(Node(idCheckTimeFunction, defaultChoiceFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
     
     startNodeList = []
     for i in range(startLevel.numElements):
         adjacencyList = []
         for idCheck in startLevel.allConnections[i]:
             adjacencyList.append(idCheckNodeList[idCheck])
-        startNodeList.append(Node(0, strictMinimumFn, adjacencyList, startLevel.defaultConnections[i], 100, "start" + str(i)))
+        startNodeList.append(Node(startTimeFunction, strictMinimumFn, adjacencyList, startLevel.defaultConnections[i], 100, "start" + str(i)))
   #  startNode = Node(0, defaultChoiceFn, idCheckNodeList, 0, 100, "start")
     
 
