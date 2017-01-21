@@ -61,6 +61,13 @@ def getIndicesOfNum(num, twoDList):
                 break
     return indices
 
+def isInt(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+
 SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections zoneDConnections")
 
 #def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
@@ -87,6 +94,22 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
             return choicesList.index(min(choicesList)) #return index of zoneD with fewest people waiting
         else:
             return default
+    def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
+        randNum = random.random()
+        if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
+            if (len(choicesList) == 2):
+                return 1
+            return choicesList.index(min(choicesList))  # return index of zoneD with fewest people waiting
+        else:
+            dropOffNode = prevPath[-2]
+            startIndex = len(dropOffNode)-1
+            for letter in range(len(dropOffNode)):
+                if(isInt(dropOffNode[letter])):
+                    startIndex = letter
+                    break
+            index = dropOffNode[startIndex:]
+            return index
+
     # endNode = EndNode()
     # pickUpNode = Node(2, defaultChoiceFn, [endNode], 100, "pickUp")
     # aitNode = Node(1.3, defaultChoiceFn, [pickUpNode], 100, "ait")
@@ -124,7 +147,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(11.5/scalar, zoneDChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
+        aitNodeList.append(Node(11.5/scalar, aitChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):

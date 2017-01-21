@@ -34,7 +34,7 @@ class Node(threading.Thread):
             #person.endWaiting()
             queueLengths = list(map(lambda n: len(n.queue), self.adjacencyList))
 
-            nodeIndex = self.choiceFunction(queueLengths,self.defaultChoiceIndex)
+            nodeIndex = self.choiceFunction(queueLengths,self.defaultChoiceIndex, person.path)
             while (True):
                 if (self.adjacencyList[nodeIndex].addToQueue(person)):
                     person.startWaiting()
