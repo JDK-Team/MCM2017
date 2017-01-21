@@ -4,13 +4,14 @@ import sys
 import threading
 
 class Node(threading.Thread):
-    def __init__(self, time, function, adjacencyList, queueMax, name):
+    def __init__(self, time, function, adjacencyList, defaultChoiceIndex, queueMax, name):
         threading.Thread.__init__(self, name=name)
         self.queue = []
         self.name = name
         self.timeAtNode = time
         self.choiceFunction = function #returns integer that is index of node in adjacency list
         self.adjacencyList = adjacencyList
+        self.defaultChoiceIndex = defaultChoiceIndex
         self.isSimulating = False
         self.queueMax = queueMax
         self.shouldFinish = threading.Event()
@@ -20,7 +21,8 @@ class Node(threading.Thread):
             return False
         self.queue.append(person)
         person.endWaiting()
-        #print("start", self.name, person.id)
+        print("start", self.name, person.id)
+        person.path.append(self.name)
         return True
         #if(not(self.isSimulating))
 
@@ -30,7 +32,9 @@ class Node(threading.Thread):
             person = self.queue.pop(0)
             time.sleep(self.timeAtNode)
             #person.endWaiting()
-            nodeIndex = self.choiceFunction()
+            queueLengths = list(map(lambda n: len(n.queue), self.adjacencyList))
+
+            nodeIndex = self.choiceFunction(queueLengths,self.defaultChoiceIndex)
             while (True):
                 if (self.adjacencyList[nodeIndex].addToQueue(person)):
                     person.startWaiting()
@@ -55,14 +59,16 @@ class Node(threading.Thread):
 
 class EndNode(Node):
     def __init__(self):
-        Node.__init__(self, 0, None, None, 1000, "end")
+        Node.__init__(self, 0, None, None, 0, 1000, "end")
         self.count = 0
         self.numPeople = 0
         self.graph = None
 
     def addToQueue(self, person):
         person.endWaiting()
-        print(person.timeSpent, person.timesAtNodes)
+        print("Person", person.id,"finished:",person.timeSpent)
+        print(person.path)
+        print(list(map(lambda x: round(x,2), person.timesAtNodes)))
         self.count += 1
         if(self.count == self.numPeople):
             self.graph.finish()

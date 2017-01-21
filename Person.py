@@ -7,6 +7,7 @@ class Person:
         self.timesAtNodes = []
         self.id = Person.counter
         Person.counter += 1
+        self.path = []
 
     def startWaiting(self):
         self.startTime = time.time()
