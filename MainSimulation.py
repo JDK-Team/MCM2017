@@ -6,6 +6,7 @@ from collections import namedtuple
 import random
 
 class Graph:
+    
     def __init__(self,startNodes,endNode,nodeList):
         self.startNodes = startNodes
         self.endNode = endNode
@@ -28,12 +29,26 @@ class Graph:
         self.endNode.numPeople = numPeople
         for i in range(numPeople):
             self.addPerson()
-            time.sleep(13)
+            time.sleep(self.generateRandomSeconds())
 
     def finish(self):
         for startNode in self.startNodes:
             startNode.stop()
         sys.exit()
+
+    @staticmethod
+    def generateRandomSeconds():
+        r = random.random()
+        if r < .3913:
+            return 1
+        elif r < .543:
+            return 5
+        elif r < .696:
+            return 10
+        elif r < .826:
+            return 15
+        else:
+            return 20
 
 def getIndicesOfNum(num, twoDList):
     indices = []
@@ -58,7 +73,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel):
         if choicesList[default] == min(choicesList):
             return default
         try:
-            return choicesList.index(min(choiceList))
+            return choicesList.index(min(choicesList))
         except ValueError:
             print("Something is truly wrong here: the minimum element is not in the array...")
             return 0
