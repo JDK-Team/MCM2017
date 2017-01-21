@@ -132,7 +132,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel):
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(10000)
+    g.simulate(100)
 
     # p = Person()
     # p.startWaiting()
