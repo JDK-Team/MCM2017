@@ -69,6 +69,8 @@ class EndNode(Node):
         print("Person", person.id,"finished:",person.timeSpent)
         print(person.path)
         print(list(map(lambda x: round(x,2), person.timesAtNodes)))
+        with open("people_times.csv", 'a') as peoplecsv:
+            peoplecsv.write('{},{},{}'.format(person.id,person.timeSpent,person.timesAtNodes,sep=','))
         self.count += 1
         if(self.count == self.numPeople):
             self.graph.finish()
