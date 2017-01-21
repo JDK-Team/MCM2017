@@ -3,7 +3,7 @@ import time
 import sys
 import threading
 
-thread_trace = []
+#thread_trace = []
 
 class Node(threading.Thread):
     def __init__(self, time, function, adjacencyList, defaultChoiceIndex, queueMax, name):
