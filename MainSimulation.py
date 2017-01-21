@@ -4,6 +4,7 @@ import sys
 import time
 from collections import namedtuple
 import random
+scalar = 100
 
 class Graph:
     
@@ -22,6 +23,7 @@ class Graph:
         self.startNodes[s].addToQueue(p)
 
     def simulate(self,numPeople):
+        global scalar
         #start all the threads
         for node in self.nodeList:
             print(node, "adjacency list: ", node.adjacencyList)
@@ -29,7 +31,7 @@ class Graph:
         self.endNode.numPeople = numPeople
         for i in range(numPeople):
             self.addPerson()
-            time.sleep(self.generateRandomSeconds())
+            time.sleep(self.generateRandomSeconds()/scalar)
 
     def finish(self):
         for startNode in self.startNodes:
@@ -62,7 +64,7 @@ def getIndicesOfNum(num, twoDList):
 SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections")
 
 #def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
-def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel):
+def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes):
     # these must all be SecurityLevel named tuples
     def defaultChoiceFn(choicesList,default=0,prevPath=[]):
         return default
@@ -85,10 +87,15 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel):
     # startNode = Node(0, defaultChoiceFn, [idCheckNode], 100, "start")
     # nodeList = [endNode, pickUpNode, aitNode, dropOffNode, idCheckNode, startNode]
 
+    global scalar
+
     endNode = EndNode()
     pickUpNodeList = []
     for i in range(dropOffLevel.numElements):
-        pickUpNodeList.append(Node(8.5, defaultChoiceFn, [endNode], 0, 100, "pickUp" + str(i)))
+        if(i in preCheckNodes):
+            pickUpNodeList.append(Node(5/scalar, defaultChoiceFn, [endNode], 0, 100, "PreCheckpickUp" + str(i)))
+        else:
+            pickUpNodeList.append(Node(8.5/scalar, defaultChoiceFn, [endNode], 0, 100, "pickUp" + str(i)))
 
     aitNodeList = []
     for i in range(aitLevel.numElements):
@@ -99,21 +106,24 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel):
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(11.5, defaultChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
+        aitNodeList.append(Node(11.5/scalar, defaultChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = []
         for ait in dropOffLevel.allConnections[i]:
             adjacencyList.append(aitNodeList[ait])
-        dropOffNodeList.append(Node(8.5, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "dropOff" + str(i)))
+        if(i in preCheckNodes):
+            dropOffNodeList.append(Node(5/scalar, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "PreCheckdropOff" + str(i)))
+        else:
+            dropOffNodeList.append(Node(8.5/scalar, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "dropOff" + str(i)))
     
     idCheckNodeList = []
     for i in range(idCheckLevel.numElements):
         adjacencyList = []
         for dropOff in idCheckLevel.allConnections[i]:
             adjacencyList.append(dropOffNodeList[dropOff])
-        idCheckNodeList.append(Node(11, defaultChoiceFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
+        idCheckNodeList.append(Node(11/scalar, defaultChoiceFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
     
     startNodeList = []
     for i in range(startLevel.numElements):
@@ -145,8 +155,9 @@ startLevel = SecurityLevel(2,[1,0],[[0,1], [2]])
 idCheckTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]])
 dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]])
 aitTuple = SecurityLevel(3,None,None)
+preCheckNodes = [2] #indices of drop off (and therefor pickup) nodes that are TSA-precheck
 
-makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple)
+makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, preCheckNodes)
 #makeGraph(2,3,3, #numIDCheckNodes, numScanners, numAITS
 #          [[0,1], [1,2]], #idCheckToDropOff
 #          [[0,1], [0,1,2], [2]]) #dropOffForAITS

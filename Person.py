@@ -1,4 +1,5 @@
 import time
+scalar = 100
 
 class Person:
     counter = 1
@@ -14,5 +15,6 @@ class Person:
 
     def endWaiting(self):
         self.endTime = time.time()
-        self.timeSpent += self.endTime - self.startTime
-        self.timesAtNodes.append(self.endTime - self.startTime)
+        diff = (self.endTime - self.startTime)*scalar
+        self.timeSpent += diff
+        self.timesAtNodes.append(diff)

@@ -44,10 +44,10 @@ class Node(threading.Thread):
         # self.isSimulating = False
 
     def run(self):
-        while not self.shouldFinish.is_set():
+        while not self.shouldFinish.is_set(): #so that program will end when you want it to
             self.startSimulation()
     
-    def stop(self):
+    def stop(self): #ends the program
         for node in self.adjacencyList:
             node.stop()
         self.shouldFinish.set()
