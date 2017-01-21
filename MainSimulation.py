@@ -71,7 +71,7 @@ def isInt(string):
 SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections zoneDConnections")
 
 #def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
-def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numberOfZoneD): # the first four must be SecurityLevel named tuples
+def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagCheck): # the first four must be SecurityLevel named tuples
     #################CHOICE FUNCTIONS#####################################################################
     def defaultChoiceFn(choicesList,default=0,prevPath=[]):
         return default
@@ -86,20 +86,22 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
         except ValueError:
             print("Something is truly wrong here: the minimum element is not in the array...")
             return 0
-    def zoneDChoiceFn(choicesList,default=0,prevPath=[]): #zoneD choices are always listed after regular screening choices (never choice 0)
+    def pickUpNodeChoiceFn(choicesList,default=0,prevPath=[]): #end node is always choice 0, zone D bag check nodes are indices 1,2,...
         randNum = random.random()
         if(randNum<.01): #1% of people go to zone D and 1% of bags go to zone D
+            zoneDchoicesList = choicesList[1:]
             if(len(choicesList) == 2):
                 return 1
-            return choicesList.index(min(choicesList)) #return index of zoneD with fewest people waiting
+            return choicesList.index(min(zoneDchoicesList)) #return index of zoneD with fewest people waiting
         else:
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
         if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
+            zoneDchoices = choicesList[1:]
             if (len(choicesList) == 2):
                 return 1
-            return choicesList.index(min(choicesList))  # return index of zoneD with fewest people waiting
+            return choicesList.index(min(zoneDchoices))  # return index of zoneD with fewest people waiting
         else:
             dropOffNode = prevPath[-2]
             startIndex = len(dropOffNode)-1
@@ -107,16 +109,24 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
                 if(isInt(dropOffNode[letter])):
                     startIndex = letter
                     break
-            index = dropOffNode[startIndex:]
+            index = int(dropOffNode[startIndex:])
             return index
+    def zoneDPatdownChoiceFn(choicesList,default=0,prevPath=[]):
+        dropOffNode = prevPath[-3]
+        startIndex = len(dropOffNode) - 1
+        for letter in range(len(dropOffNode)):
+            if (isInt(dropOffNode[letter])):
+                startIndex = letter
+                break
+        index = int(dropOffNode[startIndex:])
+        return index
 
-    ###########TIME FUNCTIONS#####################################################################
-    def zoneDTimeFunction(path):
-        prevNode = path[-1]
-        if(prevNode[0] == "P" or prevNode[0] == "p"): #came from pickUp, gotta recheck bags
-            return 300/scalar
-        else: #came from AIT, just doing a patdown
-            return 20/scalar
+
+    ###############################TIME FUNCTIONS#####################################################################
+    def zoneDPatdownTimeFunction(path):
+        return 20/scalar
+    def zoneDBagCheckTimeFunction(path):
+        return 300/scalar
     def pickUpNodeTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             return 8.5/scalar
@@ -146,24 +156,35 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
 
     endNode = EndNode()
 
-    zoneDNodeList = []
-    for i in range(numberOfZoneD):
-        zoneDNodeList.append(Node(zoneDTimeFunction, defaultChoiceFn, [endNode], 0, 10, "zoneD" + str(i))) #10 people can be in zone D
+    zoneDBagCheckNodeList = []
+    for i in range(numberOfZoneDbagCheck):
+        zoneDBagCheckNodeList.append(Node(zoneDBagCheckTimeFunction, defaultChoiceFn, [endNode], 0, 10, "zoneDbagcheck" + str(i))) #10 people can be in zone D
 
     pickUpNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = [endNode]
         for j in dropOffLevel.zoneDConnections[i]:
-            adjacencyList.append(zoneDNodeList[j])
-        pickUpNodeList.append(Node(pickUpNodeTimeFunction, zoneDChoiceFn, adjacencyList, 0, 100, "PreCheckPickUp" + str(i)))
+            adjacencyList.append(zoneDBagCheckNodeList[j])
+        pickUpNodeList.append(Node(pickUpNodeTimeFunction, pickUpNodeChoiceFn, adjacencyList, 0, 100, "pickUp" + str(i)))
+
+    zoneDPatdownNodeList = []
+    for i in range(aitLevel.numElements): #one patdown area for each AIT
+        adjacencyList = []
+        for j in range(dropOffLevel.numElements): #can't really go to all drop offs but need a list of all of them so the index specified by person.path in choice function matches
+            adjacencyList.append(pickUpNodeList[j])
+        try:
+            defaultIndex = dropOffLevel.defaultConnections.index(i)
+        except ValueError:
+            defaultIndex = 0
+        zoneDPatdownNodeList.append(Node(zoneDPatdownTimeFunction, zoneDPatdownChoiceFn, adjacencyList, defaultIndex, 5, "zoneDpatdown" + str(i)))
 
     aitNodeList = []
     for i in range(aitLevel.numElements):
         adjacencyList = []
-        for j in getIndicesOfNum(i, dropOffLevel.allConnections):
+        #for j in getIndicesOfNum(i, dropOffLevel.allConnections):
+        for j in range(dropOffLevel.numElements): #can't really go to all drop offs but need a list of all of them so the index specified by person.path matches
             adjacencyList.append(pickUpNodeList[j])
-        for j in aitLevel.zoneDConnections[i]:
-            adjacencyList.append(zoneDNodeList[j])
+        adjacencyList.append(zoneDPatdownNodeList[i])
         try:
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
@@ -175,7 +196,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
         adjacencyList = []
         for ait in dropOffLevel.allConnections[i]:
             adjacencyList.append(aitNodeList[ait])
-        dropOffNodeList.append(Node(dropOffTimeFunction, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "PreCheckdropOff" + str(i)))
+        dropOffNodeList.append(Node(dropOffTimeFunction, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "dropOff" + str(i)))
     
     idCheckNodeList = []
     for i in range(idCheckLevel.numElements):
@@ -195,7 +216,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, preCheckNodes, numb
 
 
     nodeList = [endNode]
-    nodeList = nodeList + zoneDNodeList + pickUpNodeList + aitNodeList + dropOffNodeList + idCheckNodeList
+    nodeList = nodeList + zoneDBagCheckNodeList + pickUpNodeList + zoneDPatdownNodeList + aitNodeList + dropOffNodeList + idCheckNodeList
     nodeList.extend(startNodeList)
     # for node in nodeList:
     #     node.start()
@@ -212,12 +233,11 @@ random.seed(a=1)
 #be careful, the second argument is indexes of the elements of the third argument 
 startLevel = SecurityLevel(2,[1,0],[[0,1], [2]], None)
 idCheckTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], None)
-dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], [[0], [0], [1]]) #last argument is the zone D's that the given scanner feeds in to (should have the
+dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], [[0], [0], [1]]) #last argument is the zone D bag checks that the given scanner feeds in to (should have the
                                                                                     #same number of sublists as there are scanners)
 aitTuple = SecurityLevel(3,None,None, [[0],[0],[1]])
-preCheckNodes = [2] #indices of drop off (and therefore pickup) nodes that are TSA-precheck
 
-makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, preCheckNodes, 2)
+makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, 2)
 #makeGraph(2,3,3, #numIDCheckNodes, numScanners, numAITS
 #          [[0,1], [1,2]], #idCheckToDropOff
 #          [[0,1], [0,1,2], [2]]) #dropOffForAITS
