@@ -43,7 +43,9 @@ class Node(threading.Thread):
             self.startSimulation()
     
     def stop(self):
-        self.shouldFisish.set()
+        for node in self.adjacencyList:
+            node.stop()
+        self.shouldFinish.set()
     
     def __str__(self):
         return self.name
@@ -65,6 +67,9 @@ class EndNode(Node):
             self.graph.finish()
         return True
 
+    def stop(self):
+        self.shouldFinish.set()
+    
 
 # class StartNode(Node):
 #     def __init__(self, time, function, adjacencyList):
