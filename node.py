@@ -2,7 +2,7 @@ from Person import Person
 import time
 import sys
 import threading
-scalar = 100
+scalar = 1000
 count = 1
 #thread_trace = []
 

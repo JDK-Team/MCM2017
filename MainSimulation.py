@@ -4,6 +4,7 @@ import sys
 import time
 from collections import namedtuple
 import random
+scalar = 1000
 import csv
 import numpy as np
 
@@ -109,7 +110,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
         try:
             return choicesList.index(min(choicesList))
         except ValueError:
-            print("Something is truly wrong here: the minimum element is not in the array...")
+            #print("Something is truly wrong here: the minimum element is not in the array...")
             return 0
     def pickUpNodeChoiceFn(choicesList,default=0,prevPath=[]): #end node is always choice 0, zone D bag check nodes are indices 1,2,...
         randNum = random.random()

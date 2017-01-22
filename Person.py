@@ -1,5 +1,5 @@
 import time
-scalar = 100
+scalar = 1000
 
 class Person:
     counter = 1
