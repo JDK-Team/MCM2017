@@ -70,11 +70,12 @@ class Node(threading.Thread):
 
 
 class EndNode(Node):
-    def __init__(self):
+    def __init__(self, filename):
         Node.__init__(self, 0, None, None, 0, 1000, "end")
         self.count = 0
         self.numPeople = 0
         self.graph = None
+        self.filename = filename
 
     def addToQueue(self, person):
         person.endWaiting()
@@ -83,7 +84,7 @@ class EndNode(Node):
         #print(person.queuesAtNodes)
         print(list(map(lambda x: round(x,2), person.timesAtNodes)))
         newPersonTimes = self.formatPerson(person.timesAtNodes, person.path)
-        with open("people_times.csv", 'a') as peoplecsv:
+        with open(self.filename, 'a') as peoplecsv:
             peoplecsv.write('{},{},'.format(person.id,person.timeSpent,sep=','))
             for time in newPersonTimes:
                 peoplecsv.write('{},'.format(time, sep=','))
@@ -109,6 +110,7 @@ class EndNode(Node):
 
 
     def stop(self):
+        self.shouldWork.set()
         self.shouldFinish.set()
 
 

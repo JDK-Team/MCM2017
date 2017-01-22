@@ -8,8 +8,11 @@ scalar = 100
 import csv
 import numpy as np
 
+if len(sys.argv) < 3:
+    print("usage: python3 MainSimulation.py [filename] [percent_precheck]")
+    sys.exit()
+
 class Graph:
-    
     def __init__(self,startNodes,endNode,nodeList):
         self.startNodes = startNodes
         self.endNode = endNode
@@ -20,14 +23,14 @@ class Graph:
         p = Person()
         p.startWaiting()
         s = 0
-        if random.random() < 0.45:
+        if random.random() < float(sys.argv[2]):
             s += 1
             p.precheck = 1
         self.startNodes[s].addToQueue(p)
 
     def simulate(self,numPeople):
         #open csv file
-        with open("people_times.csv", 'w') as peoplecsv:
+        with open(sys.argv[1], 'w') as peoplecsv:
             writer = csv.writer(peoplecsv, delimiter=',')
             writer.writerow(['person id', 'total time spent', 'initial line time',
                              'id check time', 'drop off time', 'ait time', 'pat down time', 'pick up time',
@@ -185,7 +188,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
 
     global scalar
 
-    endNode = EndNode()
+    endNode = EndNode(sys.argv[1])
 
     zoneDBagCheckNodeList = []
     for i in range(numberOfZoneDbagCheck):
