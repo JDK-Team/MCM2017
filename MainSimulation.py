@@ -165,9 +165,9 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return t
     def zoneDBagCheckTimeFunction(path): #5 minutes
         #return 300/scalar
-        t = np.random.normal(300, 60) / scalar
-        if (t < 15/scalar):
-            return 15/scalar
+        t = np.random.normal(120, 60) / scalar
+        if (t < 30/scalar):
+            return 30/scalar
         else:
             return t
     def pickUpNodeTimeFunction(path):
@@ -182,7 +182,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
         else: #tsa precheck line
             #return 5/scalar
             #return 30/scalar
-            t = np.random.normal(30, 5) / scalar
+            t = np.random.normal(25, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
             else:
@@ -207,7 +207,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
         else:
             #return 5/scalar
             #return 35/scalar
-            t = np.random.normal(35, 5) / scalar
+            t = np.random.normal(25, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
             else:
@@ -215,7 +215,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     def idCheckTimeFunction(path):
         #return 11.5/scalar
         #return 20/scalar
-        t = np.random.normal(20,3.8)/scalar
+        t = np.random.normal(15,3.8)/scalar
         if(t<5/scalar):
             return 5/scalar
         else:
@@ -244,7 +244,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
         adjacencyList = [endNode]
         for j in dropOffLevel.zoneDConnections[i]:
             adjacencyList.append(zoneDBagCheckNodeList[j])
-        pickUpNodeList.append(Node(pickUpNodeTimeFunction, pickUpNodeChoiceFn, adjacencyList, 0, 10, "pickUp" + str(i)))
+        pickUpNodeList.append(Node(pickUpNodeTimeFunction, pickUpNodeChoiceFn, adjacencyList, 0, 15, "pickUp" + str(i)))
 
     zoneDPatdownNodeList = []
     for i in range(aitLevel.numElements): #one patdown area for each AIT
@@ -268,7 +268,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(aitTimeFunction, aitChoiceFn, adjacencyList, defaultIndex,  4, "ait" + str(i)))
+        aitNodeList.append(Node(aitTimeFunction, aitChoiceFn, adjacencyList, defaultIndex,  3, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):
