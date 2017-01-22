@@ -4,15 +4,15 @@ import sys
 import time
 from collections import namedtuple
 import random
-scalar = 100
 import csv
 import numpy as np
 import configs
 
-if len(sys.argv) < 3:
-    print("usage: python3 MainSimulation.py [filename] [percent_precheck]")
+if len(sys.argv) < 7:
+    print("usage: python3 MainSimulation.py [filename] [time_scale] [num_people] [arrival_rate_scale] [percent_precheck] [percent_zoneD]")
     sys.exit()
 
+scalar = int(sys.argv[2])
 class Graph:
     def __init__(self,startNodes,endNode,nodeList):
         self.startNodes = startNodes
@@ -24,7 +24,7 @@ class Graph:
         p = Person()
         p.startWaiting()
         s = 0
-        if random.random() < float(sys.argv[2]):
+        if random.random() < float(sys.argv[5]):
             s += 1
             p.precheck = 1
         self.startNodes[s].addToQueue(p)
@@ -56,26 +56,27 @@ class Graph:
     @staticmethod
     def generateRandomSeconds():
         r = random.random()
+        scale = sys.argv[4]
         if r < .3913:
-            return 2.5
+            return 2.5*scale
         elif r < .543:
-            return 7.5
+            return 7.5*scale
         elif r < .696:
-            return 12.5
+            return 12.5*scale
         elif r < .826:
-            return 17.5
+            return 17.5*scale
         elif r<.891:
-            return 22.5
+            return 22.5*scale
         elif r<.913:
-            return 27.5
+            return 27.5*scale
         elif r<.935:
-            return 32.5
+            return 32.5*scale
         elif r<.957:
-            return 52.5
+            return 52.5*scale
         elif r<.978:
-            return 57.5
+            return 57.5*scale
         else:
-            return 77.5
+            return 77.5*scale
 
 def getIndicesOfNum(num, twoDList):
     indices = []
@@ -122,7 +123,8 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
-        if (randNum < .07):  # 7% of people go to zone D
+        zoneDPercent = sys.argv[6]
+        if (randNum < zoneDPercent):
             return len(choicesList)-1 #only one possibly pat down node to go to
         else:
             dropOffNode = prevPath[-2]
@@ -301,7 +303,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(1000)
+    g.simulate(int(sys.argv[3]))
 
     # p = Person()
     # p.startWaiting()
