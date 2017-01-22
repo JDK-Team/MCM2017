@@ -1,5 +1,5 @@
 import time
-from MainSimulation import scalar
+scalar = 100
 
 class Person:
     counter = 1

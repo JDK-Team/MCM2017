@@ -2,7 +2,7 @@ from Person import Person
 import time
 import sys
 import threading
-from MainSimulation import scalar
+scalar = 100
 count = 1
 #thread_trace = []
 
