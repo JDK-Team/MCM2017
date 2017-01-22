@@ -112,7 +112,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return 0
     def pickUpNodeChoiceFn(choicesList,default=0,prevPath=[]): #end node is always choice 0, zone D bag check nodes are indices 1,2,...
         randNum = random.random()
-        if(randNum<.01): #1% of people go to zone D and 1% of bags go to zone D
+        if(randNum<.02):  #2% of bags go to zone D
             zoneDchoicesList = choicesList[1:]
             if(len(choicesList) == 2):
                 return 1
@@ -121,7 +121,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
-        if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
+        if (randNum < .07):  # 7% of people go to zone D
             return len(choicesList)-1 #only one possibly pat down node to go to
         else:
             dropOffNode = prevPath[-2]
@@ -173,7 +173,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     def aitTimeFunction(path):
         #return 11.5/scalar
         #return 15/scalar
-        return np.random.normal(15, 1)/scalar
+        return np.random.normal(15, 5.8)/scalar
     def dropOffTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
@@ -186,7 +186,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     def idCheckTimeFunction(path):
         #return 11.5/scalar
         #return 20/scalar
-        return np.random.normal(20,3)/scalar
+        return np.random.normal(20,3.8)/scalar
     def startTimeFunction(path):
         return 0
 
