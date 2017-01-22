@@ -26,7 +26,7 @@ class Node(threading.Thread):
         person.queuesAtNodes.append(len(self.queue))
         self.queue.append(person)
         person.endWaiting()
-        print("start", self.name, person.id)
+        #print("start", self.name, person.id)
         person.path.append(self.name)
         self.shouldWork.set()
         return True
@@ -46,8 +46,8 @@ class Node(threading.Thread):
                     person.startWaiting()
                     #print("end", self.name, person.id)
                     break
-                else:
-                    print("person ", person.id, " is waiting at ", self.name, "the next queue has length: ", queueLengths[nodeIndex])
+                # else:
+                #     print("person ", person.id, " is waiting at ", self.name, "the next queue has length: ", queueLengths[nodeIndex])
 
         # self.isSimulating = False
 
@@ -80,14 +80,33 @@ class EndNode(Node):
         person.endWaiting()
         print("Person", person.id,"finished:",person.timeSpent)
         print(person.path)
-        print(person.queuesAtNodes)
+        #print(person.queuesAtNodes)
         print(list(map(lambda x: round(x,2), person.timesAtNodes)))
+        newPersonTimes = self.formatPerson(person.timesAtNodes, person.path)
         with open("people_times.csv", 'a') as peoplecsv:
-            peoplecsv.write('{},{},{}\n'.format(person.id,person.timeSpent,person.timesAtNodes,sep=','))
+            peoplecsv.write('{},{},'.format(person.id,person.timeSpent,sep=','))
+            for time in newPersonTimes:
+                peoplecsv.write('{},'.format(time, sep=','))
+            peoplecsv.write('\n')
         self.count += 1
         if(self.count == self.numPeople):
+            print("done")
             self.graph.finish()
         return True
+
+    def formatPerson(self, timeAtNodeInfo, path):
+        newNodeInfo = timeAtNodeInfo.copy()
+        del newNodeInfo[0]
+        #see if it contains zoneDpatdown
+        if(path[4] != "zoneDpatdown"):
+            newNodeInfo.insert(4, 0)
+            if(len(path) == 5):
+                newNodeInfo.append(0)
+        elif(len(path) == 6):
+            newNodeInfo.append(0)
+        newNodeInfo = list(map(lambda x: round(x,3), newNodeInfo))
+        return newNodeInfo
+
 
     def stop(self):
         self.shouldFinish.set()

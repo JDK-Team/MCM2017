@@ -5,6 +5,7 @@ import time
 from collections import namedtuple
 import random
 scalar = 100
+import csv
 
 class Graph:
     
@@ -23,6 +24,12 @@ class Graph:
         self.startNodes[s].addToQueue(p)
 
     def simulate(self,numPeople):
+        #open csv file
+        with open("people_times.csv", 'w') as peoplecsv:
+            writer = csv.writer(peoplecsv, delimiter=',')
+            writer.writerow(['person id', 'total time spent', 'initial line time',
+                             'id check time', 'drop off time', 'ait time', 'pat down time', 'pick up time',
+                             'bag check time'])
         global scalar
         #start all the threads
         for node in self.nodeList:
@@ -98,7 +105,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
         if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
-            zoneDchoices = choicesList[1:]
+            zoneDchoices = choicesList[dropOffLevel.numElements-1:]
             if (len(choicesList) == 2):
                 return 1
             return choicesList.index(min(zoneDchoices))  # return index of zoneD with fewest people waiting
@@ -120,27 +127,44 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                 break
         index = int(dropOffNode[startIndex:])
         return index
-
+    def relativeMinFn(choicesList, default=0, prevPath = []): #chooses the shortest path if it is obviously shorter, otherwise chooses default path
+        if len(choicesList) <= 1:
+            return 0
+        minLine = min(choicesList)
+        if (choicesList[default] == minLine):
+            return default
+        if(minLine == 0): #if there is an empty line other than the default you will automatically go there
+            return choicesList.index(minLine)
+        if(choicesList[default]/minLine >= 1.5): #one line is significantly shorter than default
+            return choicesList.index(minLine)
+        else:
+            return default
 
     ###############################TIME FUNCTIONS#####################################################################
     def zoneDPatdownTimeFunction(path):
         return 20/scalar
-    def zoneDBagCheckTimeFunction(path):
+    def zoneDBagCheckTimeFunction(path): #5 minutes
         return 300/scalar
     def pickUpNodeTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
-            return 8.5/scalar
+            #return 8.5/scalar
+            return 45/scalar
         else: #tsa precheck line
-            return 5/scalar
+            #return 5/scalar
+            return 30/scalar
     def aitTimeFunction(path):
-        return 11.5/scalar
+        #return 11.5/scalar
+        return 15/scalar
     def dropOffTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
-            return 8.5/scalar
+            #return 8.5/scalar
+            return 45/scalar
         else:
-            return 5/scalar
+            #return 5/scalar
+            return 35/scalar
     def idCheckTimeFunction(path):
-        return 11.5/scalar
+        #return 11.5/scalar
+        return 20/scalar
     def startTimeFunction(path):
         return 0
 
@@ -158,14 +182,14 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
 
     zoneDBagCheckNodeList = []
     for i in range(numberOfZoneDbagCheck):
-        zoneDBagCheckNodeList.append(Node(zoneDBagCheckTimeFunction, defaultChoiceFn, [endNode], 0, 10, "zoneDbagcheck" + str(i))) #10 people can be in zone D
+        zoneDBagCheckNodeList.append(Node(zoneDBagCheckTimeFunction, defaultChoiceFn, [endNode], 0, 100, "zoneDbagcheck" + str(i))) #10 people can be in zone D
 
     pickUpNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = [endNode]
         for j in dropOffLevel.zoneDConnections[i]:
             adjacencyList.append(zoneDBagCheckNodeList[j])
-        pickUpNodeList.append(Node(pickUpNodeTimeFunction, pickUpNodeChoiceFn, adjacencyList, 0, 100, "pickUp" + str(i)))
+        pickUpNodeList.append(Node(pickUpNodeTimeFunction, pickUpNodeChoiceFn, adjacencyList, 0, 10, "pickUp" + str(i)))
 
     zoneDPatdownNodeList = []
     for i in range(aitLevel.numElements): #one patdown area for each AIT
@@ -176,7 +200,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0
-        zoneDPatdownNodeList.append(Node(zoneDPatdownTimeFunction, zoneDPatdownChoiceFn, adjacencyList, defaultIndex, 5, "zoneDpatdown" + str(i)))
+        zoneDPatdownNodeList.append(Node(zoneDPatdownTimeFunction, zoneDPatdownChoiceFn, adjacencyList, defaultIndex, 2, "zoneDpatdown" + str(i)))
 
     aitNodeList = []
     for i in range(aitLevel.numElements):
@@ -189,28 +213,28 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(aitTimeFunction, aitChoiceFn, adjacencyList, defaultIndex,  100, "ait" + str(i)))
+        aitNodeList.append(Node(aitTimeFunction, aitChoiceFn, adjacencyList, defaultIndex,  4, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = []
         for ait in dropOffLevel.allConnections[i]:
             adjacencyList.append(aitNodeList[ait])
-        dropOffNodeList.append(Node(dropOffTimeFunction, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 20, "dropOff" + str(i)))
+        dropOffNodeList.append(Node(dropOffTimeFunction, relativeMinFn, adjacencyList, dropOffLevel.defaultConnections[i], 10, "dropOff" + str(i)))
     
     idCheckNodeList = []
     for i in range(idCheckLevel.numElements):
         adjacencyList = []
         for dropOff in idCheckLevel.allConnections[i]:
             adjacencyList.append(dropOffNodeList[dropOff])
-        idCheckNodeList.append(Node(idCheckTimeFunction, defaultChoiceFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
+        idCheckNodeList.append(Node(idCheckTimeFunction, relativeMinFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
     
     startNodeList = []
     for i in range(startLevel.numElements):
         adjacencyList = []
         for idCheck in startLevel.allConnections[i]:
             adjacencyList.append(idCheckNodeList[idCheck])
-        startNodeList.append(Node(startTimeFunction, strictMinimumFn, adjacencyList, startLevel.defaultConnections[i], 100, "start" + str(i)))
+        startNodeList.append(Node(startTimeFunction, strictMinimumFn, adjacencyList, startLevel.defaultConnections[i], 10000, "start" + str(i)))
   #  startNode = Node(0, defaultChoiceFn, idCheckNodeList, 0, 100, "start")
     
 
@@ -222,7 +246,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(100)
+    g.simulate(1000)
 
     # p = Person()
     # p.startWaiting()
