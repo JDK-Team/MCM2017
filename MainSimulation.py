@@ -4,7 +4,7 @@ import sys
 import time
 from collections import namedtuple
 import random
-scalar = 1000
+#scalar = 1000
 import csv
 import numpy as np
 
