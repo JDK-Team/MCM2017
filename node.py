@@ -84,10 +84,10 @@ class EndNode(Node):
         global count #order in which people finish
         global scalar
         person.endWaiting()
-        print("Person", person.id,"finished:",person.timeSpent)
-        print(person.path)
+        #print("Person", person.id,"finished:",person.timeSpent)
+        #print(person.path)
         #print(person.queuesAtNodes)
-        print(list(map(lambda x: round(x,2), person.timesAtNodes)))
+        #print(list(map(lambda x: round(x,2), person.timesAtNodes)))
         newPersonTimes = self.formatPerson(person.timesAtNodes, person.path)
         with open(self.filename, 'a') as peoplecsv:
             peoplecsv.write('{},{},{},{},'.format(count, (time.time()-self.startTime)*scalar, person.id,person.timeSpent,sep=','))

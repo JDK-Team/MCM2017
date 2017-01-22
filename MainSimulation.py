@@ -40,7 +40,7 @@ class Graph:
             self.endNode.startTime = startTime
         #start all the threads
         for node in self.nodeList:
-            print(node, "adjacency list: ", node.adjacencyList)
+            #print(node, "adjacency list: ", node.adjacencyList)
             node.start()
         self.endNode.numPeople = numPeople
         for i in range(numPeople):
