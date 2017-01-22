@@ -98,7 +98,7 @@ class EndNode(Node):
         newNodeInfo = timeAtNodeInfo.copy()
         del newNodeInfo[0]
         #see if it contains zoneDpatdown
-        if(path[4] != "zoneDpatdown"):
+        if("zoneDpatdown" not in path[4]):
             newNodeInfo.insert(4, 0)
             if(len(path) == 5):
                 newNodeInfo.append(0)

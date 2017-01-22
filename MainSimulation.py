@@ -49,15 +49,15 @@ class Graph:
     def generateRandomSeconds():
         r = random.random()
         if r < .3913:
-            return 1
+            return 2.5
         elif r < .543:
-            return 5
+            return 7.5
         elif r < .696:
-            return 10
+            return 12.5
         elif r < .826:
-            return 15
+            return 17.5
         else:
-            return 20
+            return 22.5
 
 def getIndicesOfNum(num, twoDList):
     indices = []
@@ -104,11 +104,8 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
-        if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
-            zoneDchoices = choicesList[dropOffLevel.numElements-1:]
-            if (len(choicesList) == 2):
-                return 1
-            return choicesList.index(min(zoneDchoices))  # return index of zoneD with fewest people waiting
+        if (randNum < 1):  # 1% of people go to zone D and 1% of bags go to zone D
+            return len(choicesList)-1 #only one possibly pat down node to go to
         else:
             dropOffNode = prevPath[-2]
             startIndex = len(dropOffNode)-1
@@ -246,7 +243,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(1000)
+    g.simulate(10)
 
     # p = Person()
     # p.startWaiting()
