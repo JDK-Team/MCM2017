@@ -268,7 +268,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(10)
+    g.simulate(1000)
 
     # p = Person()
     # p.startWaiting()
