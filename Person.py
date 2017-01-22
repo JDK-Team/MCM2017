@@ -10,6 +10,7 @@ class Person:
         Person.counter += 1
         self.path = []
         self.queuesAtNodes = []
+        self.precheck = 0 #0 means not precheck, 1 means precheck
 
     def startWaiting(self):
         self.startTime = time.time()

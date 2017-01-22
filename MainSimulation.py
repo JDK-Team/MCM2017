@@ -6,6 +6,7 @@ from collections import namedtuple
 import random
 scalar = 100
 import csv
+import numpy as np
 
 class Graph:
     
@@ -21,6 +22,7 @@ class Graph:
         s = 0
         if random.random() < 0.45:
             s += 1
+            p.precheck = 1
         self.startNodes[s].addToQueue(p)
 
     def simulate(self,numPeople):
@@ -29,7 +31,7 @@ class Graph:
             writer = csv.writer(peoplecsv, delimiter=',')
             writer.writerow(['person id', 'total time spent', 'initial line time',
                              'id check time', 'drop off time', 'ait time', 'pat down time', 'pick up time',
-                             'bag check time'])
+                             'bag check time', 'precheck'])
         global scalar
         #start all the threads
         for node in self.nodeList:
@@ -104,7 +106,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
-        if (randNum < 1):  # 1% of people go to zone D and 1% of bags go to zone D
+        if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
             return len(choicesList)-1 #only one possibly pat down node to go to
         else:
             dropOffNode = prevPath[-2]
@@ -139,29 +141,37 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
 
     ###############################TIME FUNCTIONS#####################################################################
     def zoneDPatdownTimeFunction(path):
-        return 20/scalar
+        # return 20/scalar
+        return np.random.normal(20, 2)/scalar
     def zoneDBagCheckTimeFunction(path): #5 minutes
-        return 300/scalar
+        #return 300/scalar
+        return np.random.normal(300, 60)/scalar
     def pickUpNodeTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
-            return 45/scalar
+            #return 45/scalar
+            return np.random.normal(45, 5)/scalar
         else: #tsa precheck line
             #return 5/scalar
-            return 30/scalar
+            #return 30/scalar
+            return np.random.normal(30, 5)/scalar
     def aitTimeFunction(path):
         #return 11.5/scalar
-        return 15/scalar
+        #return 15/scalar
+        return np.random.normal(15, 1)/scalar
     def dropOffTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
-            return 45/scalar
+            #return 45/scalar
+            return np.random.normal(45, 10)/scalar
         else:
             #return 5/scalar
-            return 35/scalar
+            #return 35/scalar
+            return np.random.normal(35, 5)/scalar
     def idCheckTimeFunction(path):
         #return 11.5/scalar
-        return 20/scalar
+        #return 20/scalar
+        return np.random.normal(20,3)/scalar
     def startTimeFunction(path):
         return 0
 
@@ -243,7 +253,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(10)
+    g.simulate(1000)
 
     # p = Person()
     # p.startWaiting()

@@ -87,7 +87,7 @@ class EndNode(Node):
             peoplecsv.write('{},{},'.format(person.id,person.timeSpent,sep=','))
             for time in newPersonTimes:
                 peoplecsv.write('{},'.format(time, sep=','))
-            peoplecsv.write('\n')
+            peoplecsv.write('{}\n'.format(person.precheck, sep=','))
         self.count += 1
         if(self.count == self.numPeople):
             print("done")
