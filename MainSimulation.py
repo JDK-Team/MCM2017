@@ -63,8 +63,18 @@ class Graph:
             return 12.5
         elif r < .826:
             return 17.5
-        else:
+        elif r<.891:
             return 22.5
+        elif r<.913:
+            return 27.5
+        elif r<.935:
+            return 32.5
+        elif r<.957:
+            return 52.5
+        elif r<.978:
+            return 57.5
+        else:
+            return 77.5
 
 def getIndicesOfNum(num, twoDList):
     indices = []
