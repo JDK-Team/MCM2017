@@ -6,7 +6,6 @@ from collections import namedtuple
 import random
 import csv
 import numpy as np
-import configs
 
 if len(sys.argv) < 7:
     print("usage: python3 MainSimulation.py [filename] [time_scale] [num_people] [arrival_rate_scale] [percent_precheck] [percent_zoneD]")
@@ -56,7 +55,7 @@ class Graph:
     @staticmethod
     def generateRandomSeconds():
         r = random.random()
-        scale = sys.argv[4]
+        scale = float(sys.argv[4])
         if r < .3913:
             return 2.5*scale
         elif r < .543:
@@ -123,7 +122,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
-        zoneDPercent = sys.argv[6]
+        zoneDPercent = float(sys.argv[6])
         if (randNum < zoneDPercent):
             return len(choicesList)-1 #only one possibly pat down node to go to
         else:
@@ -309,7 +308,16 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     # p.startWaiting()
     # startNode.addToQueue(p)
 
-random.seed(a=1)
+def defaultFourLanes():
+        startLevel = SecurityLevel(2,[1,0],[[0,1],[2]],None)
+        idCheckLevel = SecurityLevel(3,[1,1,0],[[0,1,2],[0,1,2],[0,1,2],[3]],None)
+        dropOffTuple = SecurityLevel(4,[0,1,0,0],[[0,1],[0,1],[2],[3]],[[0],[0],[1],[1]])
+        aitTuple = SecurityLevel(4,None,None,None)
+        numBagChecks = 2
+        return (startLevel,idCheckLevel,dropOffTuple,aitTuple,numBagChecks)
+
+
+random.seed()
 
 #be careful, the second argument is indexes of the elements of the third argument 
 startLevel = SecurityLevel(2,[1,0],[[0,1], [2]], None)
@@ -317,7 +325,7 @@ idCheckTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], None)
 dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], [[0], [0], [1]]) #last argument is the zone D bag checks that the given scanner feeds in to (should have the
                                                                                     #same number of sublists as there are scanners)
 aitTuple = SecurityLevel(3,None,None, None)
-args = configs.defaultFourLanes()
+args = defaultFourLanes()
 makeGraph(*args)
 #makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, 2)
 #makeGraph(2,3,3, #numIDCheckNodes, numScanners, numAITS
