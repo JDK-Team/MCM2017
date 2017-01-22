@@ -7,6 +7,7 @@ import random
 scalar = 100
 import csv
 import numpy as np
+import configs
 
 if len(sys.argv) < 3:
     print("usage: python3 MainSimulation.py [filename] [percent_precheck]")
@@ -271,9 +272,10 @@ startLevel = SecurityLevel(2,[1,0],[[0,1], [2]], None)
 idCheckTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], None)
 dropOffTuple = SecurityLevel(3,[0,1,0],[[0,1], [0,1], [2]], [[0], [0], [1]]) #last argument is the zone D bag checks that the given scanner feeds in to (should have the
                                                                                     #same number of sublists as there are scanners)
-aitTuple = SecurityLevel(3,None,None, [[0],[0],[1]])
-
-makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, 2)
+aitTuple = SecurityLevel(3,None,None, None)
+args = configs.defaultFourLanes()
+makeGraph(*args)
+#makeGraph(startLevel,idCheckTuple,dropOffTuple,aitTuple, 2)
 #makeGraph(2,3,3, #numIDCheckNodes, numScanners, numAITS
 #          [[0,1], [1,2]], #idCheckToDropOff
 #          [[0,1], [0,1,2], [2]]) #dropOffForAITS
