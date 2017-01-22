@@ -64,8 +64,18 @@ class Graph:
             return 12.5
         elif r < .826:
             return 17.5
-        else:
+        elif r<.891:
             return 22.5
+        elif r<.913:
+            return 27.5
+        elif r<.935:
+            return 32.5
+        elif r<.957:
+            return 52.5
+        elif r<.978:
+            return 57.5
+        else:
+            return 77.5
 
 def getIndicesOfNum(num, twoDList):
     indices = []
@@ -103,7 +113,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return 0
     def pickUpNodeChoiceFn(choicesList,default=0,prevPath=[]): #end node is always choice 0, zone D bag check nodes are indices 1,2,...
         randNum = random.random()
-        if(randNum<.01): #1% of people go to zone D and 1% of bags go to zone D
+        if(randNum<.02):  #2% of bags go to zone D
             zoneDchoicesList = choicesList[1:]
             if(len(choicesList) == 2):
                 return 1
@@ -112,7 +122,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return default
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
         randNum = random.random()
-        if (randNum < .01):  # 1% of people go to zone D and 1% of bags go to zone D
+        if (randNum < .07):  # 7% of people go to zone D
             return len(choicesList)-1 #only one possibly pat down node to go to
         else:
             dropOffNode = prevPath[-2]
@@ -148,36 +158,68 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     ###############################TIME FUNCTIONS#####################################################################
     def zoneDPatdownTimeFunction(path):
         # return 20/scalar
-        return np.random.normal(20, 2)/scalar
+        t = np.random.normal(20, 2)/scalar
+        if(t<3/scalar):
+            return 3/scalar
+        else:
+            return t
     def zoneDBagCheckTimeFunction(path): #5 minutes
         #return 300/scalar
-        return np.random.normal(300, 60)/scalar
+        t = np.random.normal(300, 60) / scalar
+        if (t < 15/scalar):
+            return 15/scalar
+        else:
+            return t
     def pickUpNodeTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
             #return 45/scalar
-            return np.random.normal(45, 5)/scalar
+            t = np.random.normal(45, 5) / scalar
+            if (t < 5/scalar):
+                return 5/scalar
+            else:
+                return t
         else: #tsa precheck line
             #return 5/scalar
             #return 30/scalar
-            return np.random.normal(30, 5)/scalar
+            t = np.random.normal(30, 5) / scalar
+            if (t < 5/scalar):
+                return 5/scalar
+            else:
+                return t
     def aitTimeFunction(path):
         #return 11.5/scalar
         #return 15/scalar
-        return np.random.normal(15, 1)/scalar
+        t = np.random.normal(15, 5.8)/scalar
+        if(t<3.5/scalar):
+            return 3.5/scalar
+        else:
+            return t
     def dropOffTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
             #return 45/scalar
-            return np.random.normal(45, 10)/scalar
+            t = np.random.normal(45, 10) / scalar
+            if (t < 5/scalar):
+                return 5/scalar
+            else:
+                return t
         else:
             #return 5/scalar
             #return 35/scalar
-            return np.random.normal(35, 5)/scalar
+            t = np.random.normal(35, 5) / scalar
+            if (t < 5/scalar):
+                return 5/scalar
+            else:
+                return t
     def idCheckTimeFunction(path):
         #return 11.5/scalar
         #return 20/scalar
-        return np.random.normal(20,3)/scalar
+        t = np.random.normal(20,3.8)/scalar
+        if(t<5/scalar):
+            return 5/scalar
+        else:
+            return t
     def startTimeFunction(path):
         return 0
 
@@ -259,7 +301,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(10)
+    g.simulate(1000)
 
     # p = Person()
     # p.startWaiting()
