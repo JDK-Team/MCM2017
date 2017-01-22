@@ -2,7 +2,8 @@ from Person import Person
 import time
 import sys
 import threading
-
+scalar = 100
+count = 1
 #thread_trace = []
 
 class Node(threading.Thread):
@@ -76,8 +77,12 @@ class EndNode(Node):
         self.numPeople = 0
         self.graph = None
         self.filename = filename
+        self.startTime = 0
 
     def addToQueue(self, person):
+        import time
+        global count #order in which people finish
+        global scalar
         person.endWaiting()
         print("Person", person.id,"finished:",person.timeSpent)
         print(person.path)
@@ -85,7 +90,8 @@ class EndNode(Node):
         print(list(map(lambda x: round(x,2), person.timesAtNodes)))
         newPersonTimes = self.formatPerson(person.timesAtNodes, person.path)
         with open(self.filename, 'a') as peoplecsv:
-            peoplecsv.write('{},{},'.format(person.id,person.timeSpent,sep=','))
+            peoplecsv.write('{},{},{},{},'.format(count, (time.time()-self.startTime)*scalar, person.id,person.timeSpent,sep=','))
+            count += 1
             for time in newPersonTimes:
                 peoplecsv.write('{},'.format(time, sep=','))
             peoplecsv.write('{}\n'.format(person.precheck, sep=','))

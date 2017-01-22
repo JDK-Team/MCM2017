@@ -30,12 +30,14 @@ class Graph:
 
     def simulate(self,numPeople):
         #open csv file
+        global scalar
         with open(sys.argv[1], 'w') as peoplecsv:
             writer = csv.writer(peoplecsv, delimiter=',')
-            writer.writerow(['person id', 'total time spent', 'initial line time',
+            writer.writerow(['order finished', 'relative system time', 'person id', 'total time spent', 'initial line time',
                              'id check time', 'drop off time', 'ait time', 'pat down time', 'pick up time',
                              'bag check time', 'precheck'])
-        global scalar
+            startTime = time.time()
+            self.endNode.startTime = startTime
         #start all the threads
         for node in self.nodeList:
             print(node, "adjacency list: ", node.adjacencyList)
@@ -256,7 +258,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
-    g.simulate(1000)
+    g.simulate(10)
 
     # p = Person()
     # p.startWaiting()
