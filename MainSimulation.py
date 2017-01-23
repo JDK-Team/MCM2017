@@ -269,21 +269,21 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             defaultIndex = dropOffLevel.defaultConnections.index(i)
         except ValueError:
             defaultIndex = 0 # the function must take care of it anyway
-        aitNodeList.append(Node(aitTimeFunction, aitChoiceFn, adjacencyList, defaultIndex,  3, "ait" + str(i)))
+        aitNodeList.append(Node(aitTimeFunction, defaultChoiceFn, adjacencyList, defaultIndex,  3, "ait" + str(i)))
     
     dropOffNodeList = []
     for i in range(dropOffLevel.numElements):
         adjacencyList = []
         for ait in dropOffLevel.allConnections[i]:
             adjacencyList.append(aitNodeList[ait])
-        dropOffNodeList.append(Node(dropOffTimeFunction, relativeMinFn, adjacencyList, dropOffLevel.defaultConnections[i], 10, "dropOff" + str(i)))
+        dropOffNodeList.append(Node(dropOffTimeFunction, defaultChoiceFn, adjacencyList, dropOffLevel.defaultConnections[i], 10, "dropOff" + str(i)))
     
     idCheckNodeList = []
     for i in range(idCheckLevel.numElements):
         adjacencyList = []
         for dropOff in idCheckLevel.allConnections[i]:
             adjacencyList.append(dropOffNodeList[dropOff])
-        idCheckNodeList.append(Node(idCheckTimeFunction, relativeMinFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
+        idCheckNodeList.append(Node(idCheckTimeFunction, defaultChoiceFn, adjacencyList, idCheckLevel.defaultConnections[i], 1, "idCheck" + str(i)))
     
     startNodeList = []
     for i in range(startLevel.numElements):
