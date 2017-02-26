@@ -159,14 +159,14 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
 
     ###############################TIME FUNCTIONS#####################################################################
     def zoneDPatdownTimeFunction(path):
-        # return 20/scalar
+        return 20/scalar
         t = np.random.normal(20, 2)/scalar
         if(t<3/scalar):
             return 3/scalar
         else:
             return t
     def zoneDBagCheckTimeFunction(path): #5 minutes
-        #return 300/scalar
+        return 120/scalar
         t = np.random.normal(120, 60) / scalar
         if (t < 30/scalar):
             return 30/scalar
@@ -175,7 +175,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     def pickUpNodeTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
-            #return 45/scalar
+            return 45/scalar
             t = np.random.normal(45, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
@@ -183,7 +183,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                 return t
         else: #tsa precheck line
             #return 5/scalar
-            #return 30/scalar
+            return 25/scalar
             t = np.random.normal(25, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
@@ -191,7 +191,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                 return t
     def aitTimeFunction(path):
         #return 11.5/scalar
-        #return 15/scalar
+        return 15/scalar
         t = np.random.normal(15, 5.8)/scalar
         if(t<3.5/scalar):
             return 3.5/scalar
@@ -200,7 +200,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     def dropOffTimeFunction(path):
         if(path[0][-1] == "0"): #regular line
             #return 8.5/scalar
-            #return 45/scalar
+            return 45/scalar
             t = np.random.normal(45, 10) / scalar
             if (t < 5/scalar):
                 return 5/scalar
@@ -208,7 +208,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                 return t
         else:
             #return 5/scalar
-            #return 35/scalar
+            return 25/scalar
             t = np.random.normal(25, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
@@ -216,7 +216,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                 return t
     def idCheckTimeFunction(path):
         #return 11.5/scalar
-        #return 20/scalar
+        return 15/scalar
         t = np.random.normal(15,3.8)/scalar
         if(t<5/scalar):
             return 5/scalar
@@ -317,8 +317,83 @@ def defaultFourLanes():
         numBagChecks = 2
         return (startLevel,idCheckLevel,dropOffTuple,aitTuple,numBagChecks)
 
+def threePreCheckFourLanes():
+    startLevel = SecurityLevel(2,[0,0],[[0],[1,2]],None)
+    idCheckLevel = SecurityLevel(3,[0,1,1],[[0],[1,2,3],[1,2,3]],None)
+    dropOffLevel = SecurityLevel(4,[0,0,0,1],[[0],[1],[2,3],[2,3]],[[0],[0],[1],[1]])
+    aitLevel = SecurityLevel(4,None,None,None)
+    numBagChecks = 2
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+def twoPreCheckFourLanes():
+    startLevel = SecurityLevel(2,[1,0],[[0,1],[2]],None)
+    idCheckLevel = SecurityLevel(3,[0,1,0],[[0,1],[0,1],[2,3]],None)
+    dropOffLevel = SecurityLevel(4,[0,1,0,1],[[0,1],[0,1],[2,3],[2,3]],[[0],[0],[1],[1]])
+    aitLevel = SecurityLevel(4,None,None,None)
+    numBagChecks = 2
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+def onePreCheckFiveLanesThreeID():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2],[3]],None)
+    idCheckLevel = SecurityLevel(4,[1,2,2,0],[[0,1,2,3],[0,1,2,3],[0,1,2,3],[4]],None)
+    dropOffLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],[[0],[0],[1],[1],[2]])
+    aitLevel = SecurityLevel(5,None,None,None)
+    numBagChecks = 3
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+
+def onePreCheckFiveManyPossibilities():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
+    idCheckLevel = SecurityLevel(5,[0,1,2,3,0],[[0,1,2,3],[0,1,2,3],[0,1,2,3],[0,1,2,3],[4]],None)
+    dropOffLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],[[0],[0],[1],[1],[2]])
+    aitLevel = SecurityLevel(5,None,None,None)
+    numBagChecks = 3
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+def onePreCheckFiveLinesTwoHalves():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
+    idCheckLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],None)
+    dropOffLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],[[0],[0],[1],[1],[2]])
+    aitLevel = SecurityLevel(5,None,None,None)
+    numBagChecks = 3
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+def onePreCheckFiveLinesSeparated():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
+    idCheckLevel = SecurityLevel(5,[0,0,0,0,0],[[0],[1],[2],[3],[4]],None)
+    dropOffLevel = SecurityLevel(5,[0,0,0,0,0],[[0],[1],[2],[3],[4]],[[0],[0],[1],[1],[2]])
+    aitLevel = SecurityLevel(5,None,None,None)
+    numBagChecks = 3
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+def onePreCheckFiveIDThreeAIT():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
+    idCheckLevel = SecurityLevel(5,[0,0,1,1,0],[[0,1],[0,1],[0,1],[0,1],[2]],None)
+    dropOffLevel = SecurityLevel(3,[1,0,0],[[0,1],[1,2],[3]],[[0],[0],[1]])
+    aitLevel = SecurityLevel(4,None,None,None)
+    numBagChecks = 2
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+
+def onePreCheckFiveKGraph():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
+    idCheckLevel = SecurityLevel(5,[0,1,2,3,0],[[0,1,2,3],[0,1,2,3],[0,1,2,3],[0,1,2,3],[4]],None)
+    dropOffLevel = SecurityLevel(5,[0,0,0,0,0],[[0],[0],[1],[1],[2]],[[0],[0],[1],[1],[2]])
+    aitLevel = SecurityLevel(3,None,None,None)
+    numBagChecks = 3
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
+def onePreCheckFourIDThreeScanFourAIT():
+    startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
+    idCheckLevel = SecurityLevel(5,[0,1,1,2,0],[[0,1,2],[0,1,2],[0,1,2],[0,1,2],[3]],None)
+    dropOffLevel = SecurityLevel(4,[1,1,0,0],[[0,1],[1,2],[2,3],[4]],[[0],[0],[1],[1]])
+    aitLevel = SecurityLevel(5,None,None,None)
+    numBagChecks = 2
+    return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
+
 
 random.seed()
+
 
 #be careful, the second argument is indexes of the elements of the third argument 
 startLevel = SecurityLevel(2,[1,0],[[0,1], [2]], None)
