@@ -4,7 +4,6 @@ import sys
 import time
 from collections import namedtuple
 import random
-#scalar = 1000
 import csv
 import numpy as np
 
@@ -12,26 +11,43 @@ if len(sys.argv) < 7:
     print("usage: python3 MainSimulation.py [filename] [time_scale] [num_people] [arrival_rate_scale] [percent_precheck] [percent_zoneD]")
     sys.exit()
 
-scalar = int(sys.argv[2])
+scalar = int(sys.argv[2]) #how much the program is sped up (eg. 100 = 100 times faster)
+
 class Graph:
     def __init__(self,startNodes,endNode,nodeList):
+        """
+        Creates a new graph object with the given start nodes, end node, and node list.
+        :param startNodes: start nodes (one for TSA Pre-Check and one for regular lanes)
+        :param endNode: last node in the graph
+        :param nodeList: list of nodes from end to start
+        """
         self.startNodes = startNodes
         self.endNode = endNode
         self.nodeList = nodeList #list of nodes from end to start
         endNode.graph = self
 
     def addPerson(self):
+        """
+        Adds a person to the graph. Generates a random number between 0 and 1 and if the number is less than the input
+        value of percent precheck (sys.argv[5]), adds that person to the precheck lane. Otherwise, adds that person to
+        the regular lane.
+        """
         p = Person()
         p.startWaiting()
         s = 0
-        if random.random() < float(sys.argv[5]):
+        if random.random() < .01*float(sys.argv[5]):
             s += 1
             p.precheck = 1
         self.startNodes[s].addToQueue(p)
 
     def simulate(self,numPeople):
-        #open csv file
-        global scalar
+        """
+        Simulates running people through the graph at intervals following a distribution found using problem data. Opens
+        a csv file with the specified file name (sys.argv[1]) and writes data gathered as people travel through.
+        :param numPeople: number of people to run through the graph
+        """
+        #open csv file and set it up with the proper headings
+        global scalar #how much faster the program runs that it would in real life
         with open(sys.argv[1], 'w') as peoplecsv:
             writer = csv.writer(peoplecsv, delimiter=',')
             writer.writerow(['order finished', 'relative system time', 'person id', 'total time spent', 'initial line time',
@@ -41,20 +57,27 @@ class Graph:
             self.endNode.startTime = startTime
         #start all the threads
         for node in self.nodeList:
-            #print(node, "adjacency list: ", node.adjacencyList)
             node.start()
         self.endNode.numPeople = numPeople
         for i in range(numPeople):
             self.addPerson()
-            time.sleep(self.generateRandomSeconds()/scalar)
+            time.sleep(self.generateRandomSeconds()/scalar) #so the arrival of people is spaced out appropriately
 
     def finish(self):
+        """
+        Kills all the threads when people are finished going through the graph.
+        """
         for startNode in self.startNodes:
             startNode.stop()
         sys.exit()
 
     @staticmethod
     def generateRandomSeconds():
+        """
+        Generates the amount of time (in seconds) between people arriving at the security checkpoint based on the data
+        given in the problem statement. Can be scaled up or down using sys.argv[4].
+        :return: amount of time the thread should sleep before adding another person to the queue.
+        """
         r = random.random()
         scale = float(sys.argv[4])
         if r < .3913:
@@ -79,6 +102,12 @@ class Graph:
             return 77.5*scale
 
 def getIndicesOfNum(num, twoDList):
+    """
+    Gets the indices (of the outer array) of num in a 2D list
+    :param num: number whose indices we wish to find
+    :param twoDList: the list where num's indices will be found
+    :return: the indices of num in the 2D list
+    """
     indices = []
     for i in range(0, len(twoDList)):
         for j in range(0, len(twoDList[i])):
@@ -88,6 +117,11 @@ def getIndicesOfNum(num, twoDList):
     return indices
 
 def isInt(string):
+    """
+    Tests if a string can be parsed into an integer or not.
+    :param string: string to be tested
+    :return: true if the string can be parsed as an int, false otherwise.
+    """
     try:
         int(string)
         return True
@@ -96,13 +130,15 @@ def isInt(string):
 
 SecurityLevel = namedtuple("SecurityLevel", "numElements defaultConnections allConnections zoneDConnections")
 
-#def makeGraph(numIDcheckNodes, numScanners, numAITS, idCheckToDropoff, dropOffForAITS): #dropOffForAITS is a 2-d list of length numScanners that says which AIT(s) the scanner goes to (0 goes to 0 (or more) always)
+#####CREATE THE GRAPH HERE##################
 def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagCheck): # the first four must be SecurityLevel named tuples
     #################CHOICE FUNCTIONS#####################################################################
     def defaultChoiceFn(choicesList,default=0,prevPath=[]):
+        """People in line always choose the node in front of them (specified as default)"""
         return default
+
     def strictMinimumFn(choicesList,default=0,prevPath=[]):
-        #print("MINFUNC: ",choicesList,default)
+        """People choose the node with the shortest line no matter what"""
         if len(choicesList) <= 1:
             return 0
         if choicesList[default] == min(choicesList):
@@ -112,7 +148,14 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
         except ValueError:
             #print("Something is truly wrong here: the minimum element is not in the array...")
             return 0
-    def pickUpNodeChoiceFn(choicesList,default=0,prevPath=[]): #end node is always choice 0, zone D bag check nodes are indices 1,2,...
+
+    def pickUpNodeChoiceFn(choicesList,default=0,prevPath=[]):
+        """
+        People either get sent to zone D with their bags (and go to the one with the shortest line) or go to the end
+        node (which means they are through security). The end node is always choice 0, the zone D bag check nodes are
+        choices 1,2,...
+        :param choicesList: list of node choices that passenger has
+        """
         randNum = random.random()
         if(randNum<.02):  #2% of bags go to zone D
             zoneDchoicesList = choicesList[1:]
@@ -121,12 +164,20 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return choicesList.index(min(zoneDchoicesList)) #return index of zoneD with fewest people waiting
         else:
             return default
+
     def aitChoiceFn(choicesList,default=0,prevPath=[]): #go back to the scanner you came from or go to zone D
+        """
+        People either get sent to zone D (patdown) with chance sys.argv[6] or they go back to the scanner that
+        they came from.
+        :param choicesList: list of node choices that passenger has (based on edges)
+        :param prevPath: previous path the passenger took
+        :return: index of the next node the passenger will go to.
+        """
         randNum = random.random()
         zoneDPercent = float(sys.argv[6])
         if (randNum < zoneDPercent):
-            return len(choicesList)-1 #only one possibly pat down node to go to
-        else:
+            return len(choicesList)-1 #only one possibe pat down node to go to
+        else: #figure out which scanner that passenger came from and send them back to that one
             dropOffNode = prevPath[-2]
             startIndex = len(dropOffNode)-1
             for letter in range(len(dropOffNode)):
@@ -135,6 +186,7 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                     break
             index = int(dropOffNode[startIndex:])
             return index
+
     def zoneDPatdownChoiceFn(choicesList,default=0,prevPath=[]):
         dropOffNode = prevPath[-3]
         startIndex = len(dropOffNode) - 1
