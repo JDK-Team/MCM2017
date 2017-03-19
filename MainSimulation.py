@@ -188,6 +188,11 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
             return index
 
     def zoneDPatdownChoiceFn(choicesList,default=0,prevPath=[]):
+        """
+        Determines which scanner the passenger came from and sends them back to that same scanner to pick up their bags
+        :param prevPath: previous path the passenger took (has the drop off node on it)
+        :return: the index of the next node that should be chosen
+        """
         dropOffNode = prevPath[-3]
         startIndex = len(dropOffNode) - 1
         for letter in range(len(dropOffNode)):
@@ -196,7 +201,15 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
                 break
         index = int(dropOffNode[startIndex:])
         return index
+
     def relativeMinFn(choicesList, default=0, prevPath = []): #chooses the shortest path if it is obviously shorter, otherwise chooses default path
+        """
+        Passenger chooses the shortest line if it is obviously shorter than the default line (less than 2/3 as long -
+        this was an arbitrary choice).
+        :param choicesList: list of nodes that the passenger could choose to go to
+        :param default: node that the passenger will default too if no line is obviously shorter
+        :return: index of the node in choicesList that the passenger has chosen
+        """
         if len(choicesList) <= 1:
             return 0
         minLine = min(choicesList)
@@ -211,70 +224,77 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
 
     ###############################TIME FUNCTIONS#####################################################################
     def zoneDPatdownTimeFunction(path):
-        return 20/scalar
+        """Calculates the amount of time a passenger will spend getting patted down based on a normal distribution"""
+        #return 20/scalar
         t = np.random.normal(20, 2)/scalar
         if(t<3/scalar):
             return 3/scalar
         else:
             return t
+
     def zoneDBagCheckTimeFunction(path): #5 minutes
-        return 120/scalar
+        """Calculates the amount of time a passenger will spend getting their bag checked in Zone D based on a normal distribution"""
+        #return 120/scalar
         t = np.random.normal(120, 60) / scalar
         if (t < 30/scalar):
             return 30/scalar
         else:
             return t
+
     def pickUpNodeTimeFunction(path):
+        """Calculates the amount of time a passenger will spend picking up their bags based on a normal distribution"""
         if(path[0][-1] == "0"): #regular line
-            #return 8.5/scalar
-            return 45/scalar
+            #return 45/scalar
             t = np.random.normal(45, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
             else:
                 return t
-        else: #tsa precheck line
-            #return 5/scalar
-            return 25/scalar
+        else: #tsa precheck line (faster)
+            #return 25/scalar
             t = np.random.normal(25, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
             else:
                 return t
+
     def aitTimeFunction(path):
-        #return 11.5/scalar
-        return 15/scalar
+        """Calculates the amount of time a passenger will spend going through the AIT based on a normal distribution"""
+        #return 15/scalar
         t = np.random.normal(15, 5.8)/scalar
         if(t<3.5/scalar):
             return 3.5/scalar
         else:
             return t
+
     def dropOffTimeFunction(path):
+        """Calculates the amount of time a passenger will spend dropping off their baggage based on a normal distribution"""
         if(path[0][-1] == "0"): #regular line
-            #return 8.5/scalar
-            return 45/scalar
+            #return 45/scalar
             t = np.random.normal(45, 10) / scalar
             if (t < 5/scalar):
                 return 5/scalar
             else:
                 return t
-        else:
-            #return 5/scalar
-            return 25/scalar
+        else: #TSA pre-check (faster)
+            #return 25/scalar
             t = np.random.normal(25, 5) / scalar
             if (t < 5/scalar):
                 return 5/scalar
             else:
                 return t
+
     def idCheckTimeFunction(path):
-        #return 11.5/scalar
-        return 15/scalar
+        """Calculates the amount of time a passenger will spend getting their ID checked based on a normal distribution"""
+        #return 15/scalar
         t = np.random.normal(15,3.8)/scalar
         if(t<5/scalar):
             return 5/scalar
         else:
             return t
+
     def startTimeFunction(path):
+        """Passengers spend no time at the start node (just there to hold a line)"""
         return 0
 
     # endNode = EndNode()
@@ -287,8 +307,9 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
 
     global scalar
 
-    endNode = EndNode(sys.argv[1])
+    endNode = EndNode(sys.argv[1]) #create a new EndNode with the input file name
 
+    #Create the graph via lists of nodes
     zoneDBagCheckNodeList = []
     for i in range(numberOfZoneDbagCheck):
         zoneDBagCheckNodeList.append(Node(zoneDBagCheckTimeFunction, defaultChoiceFn, [endNode], 0, 100, "zoneDbagcheck" + str(i))) #10 people can be in zone D
@@ -351,8 +372,6 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     nodeList = [endNode]
     nodeList = nodeList + zoneDBagCheckNodeList + pickUpNodeList + zoneDPatdownNodeList + aitNodeList + dropOffNodeList + idCheckNodeList
     nodeList.extend(startNodeList)
-    # for node in nodeList:
-    #     node.start()
 
     g = Graph(startNodeList, endNode, nodeList)
     g.simulate(int(sys.argv[3]))
@@ -362,14 +381,22 @@ def makeGraph(startLevel,idCheckLevel,dropOffLevel,aitLevel, numberOfZoneDbagChe
     # startNode.addToQueue(p)
 
 def defaultFourLanes():
-        startLevel = SecurityLevel(2,[1,0],[[0,1],[2]],None)
-        idCheckLevel = SecurityLevel(3,[1,1,0],[[0,1,2],[0,1,2],[3]],None)
-        dropOffTuple = SecurityLevel(4,[0,1,0,0],[[0,1],[0,1],[2],[3]],[[0],[0],[1],[1]])
-        aitTuple = SecurityLevel(4,None,None,None)
-        numBagChecks = 2
-        return (startLevel,idCheckLevel,dropOffTuple,aitTuple,numBagChecks)
+    """
+    Creates the inputs to make a graph with 1 Pre-Check lane and 3 regular lanes
+    :return: the input to makeGraph()
+    """
+    startLevel = SecurityLevel(2,[1,0],[[0,1],[2]],None)
+    idCheckLevel = SecurityLevel(3,[1,1,0],[[0,1,2],[0,1,2],[3]],None)
+    dropOffTuple = SecurityLevel(4,[0,1,0,0],[[0,1],[0,1],[2],[3]],[[0],[0],[1],[1]])
+    aitTuple = SecurityLevel(4,None,None,None)
+    numBagChecks = 2
+    return (startLevel,idCheckLevel,dropOffTuple,aitTuple,numBagChecks)
 
 def threePreCheckFourLanes():
+    """
+    Creates the inputs to make a graph with 3 pre-check lanes and 1 regular lane
+    :return: the input to makeGraph()
+    """
     startLevel = SecurityLevel(2,[0,0],[[0],[1,2]],None)
     idCheckLevel = SecurityLevel(3,[0,1,1],[[0],[1,2,3],[1,2,3]],None)
     dropOffLevel = SecurityLevel(4,[0,0,0,1],[[0],[1],[2,3],[2,3]],[[0],[0],[1],[1]])
@@ -378,6 +405,10 @@ def threePreCheckFourLanes():
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
 def twoPreCheckFourLanes():
+    """
+    Creates the inputs to make a graph with 2 pre-check lanes and 2 regular lanes
+    :return: the input to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1],[2]],None)
     idCheckLevel = SecurityLevel(3,[0,1,0],[[0,1],[0,1],[2,3]],None)
     dropOffLevel = SecurityLevel(4,[0,1,0,1],[[0,1],[0,1],[2,3],[2,3]],[[0],[0],[1],[1]])
@@ -386,6 +417,10 @@ def twoPreCheckFourLanes():
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
 def onePreCheckFiveLanesThreeID():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, and 3 ID check points
+    :return: the input to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2],[3]],None)
     idCheckLevel = SecurityLevel(4,[1,2,2,0],[[0,1,2,3],[0,1,2,3],[0,1,2,3],[4]],None)
     dropOffLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],[[0],[0],[1],[1],[2]])
@@ -393,8 +428,11 @@ def onePreCheckFiveLanesThreeID():
     numBagChecks = 3
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
-
 def onePreCheckFiveManyPossibilities():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, and maximum versatility of movement
+    :return: the input to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
     idCheckLevel = SecurityLevel(5,[0,1,2,3,0],[[0,1,2,3],[0,1,2,3],[0,1,2,3],[0,1,2,3],[4]],None)
     dropOffLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],[[0],[0],[1],[1],[2]])
@@ -403,6 +441,10 @@ def onePreCheckFiveManyPossibilities():
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
 def onePreCheckFiveLinesTwoHalves():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, and no movement between each pair of regular lanes
+    :return: the input to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
     idCheckLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],None)
     dropOffLevel = SecurityLevel(5,[0,1,0,1,0],[[0,1],[0,1],[2,3],[2,3],[4]],[[0],[0],[1],[1],[2]])
@@ -411,6 +453,10 @@ def onePreCheckFiveLinesTwoHalves():
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
 def onePreCheckFiveLinesSeparated():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, and no movement between any lanes
+    :return: the inputs to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
     idCheckLevel = SecurityLevel(5,[0,0,0,0,0],[[0],[1],[2],[3],[4]],None)
     dropOffLevel = SecurityLevel(5,[0,0,0,0,0],[[0],[1],[2],[3],[4]],[[0],[0],[1],[1],[2]])
@@ -419,6 +465,10 @@ def onePreCheckFiveLinesSeparated():
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
 def onePreCheckFiveIDThreeAIT():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, and 4 AITs
+    :return: the inputs to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
     idCheckLevel = SecurityLevel(5,[0,0,1,1,0],[[0,1],[0,1],[0,1],[0,1],[2]],None)
     dropOffLevel = SecurityLevel(3,[1,0,0],[[0,1],[1,2],[3]],[[0],[0],[1]])
@@ -428,6 +478,10 @@ def onePreCheckFiveIDThreeAIT():
 
 
 def onePreCheckFiveKGraph():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, 5 ID checks, 5 scanners, and 3 AITs
+    :return: the inputs to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
     idCheckLevel = SecurityLevel(5,[0,1,2,3,0],[[0,1,2,3],[0,1,2,3],[0,1,2,3],[0,1,2,3],[4]],None)
     dropOffLevel = SecurityLevel(5,[0,0,0,0,0],[[0],[0],[1],[1],[2]],[[0],[0],[1],[1],[2]])
@@ -436,6 +490,10 @@ def onePreCheckFiveKGraph():
     return (startLevel,idCheckLevel,dropOffLevel,aitLevel,numBagChecks)
 
 def onePreCheckFourIDThreeScanFourAIT():
+    """
+    Creates the inputs to make a graph with 1 pre-check lane, 4 regular lanes, 5 ID checks, 4 scanners, and 5 AITs
+    :return: the inputs to makeGraph
+    """
     startLevel = SecurityLevel(2,[1,0],[[0,1,2,3],[4]],None)
     idCheckLevel = SecurityLevel(5,[0,1,1,2,0],[[0,1,2],[0,1,2],[0,1,2],[0,1,2],[3]],None)
     dropOffLevel = SecurityLevel(4,[1,1,0,0],[[0,1],[1,2],[2,3],[4]],[[0],[0],[1],[1]])
